@@ -1,0 +1,10 @@
+requests>=2.31.0
+python-dotenv>=1.0.0
+google-auth>=2.25.0
+google-auth-oauthlib>=1.2.0
+google-auth-httplib2>=0.2.0
+google-api-python-client>=2.110.0
+feedparser>=6.0.10
+tavily-python>=0.3.0
+exa-py>=1.0.0
+openai>=1.10.0
