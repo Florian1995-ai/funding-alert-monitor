@@ -1,6 +1,25 @@
-token_*.json
-credentials.json
-.env
-.tmp/
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Local env and credentials
+.env
+.env.*
+!.env.example
+credentials.json
+token*.json
+service_account.json
+
+# Generated runtime output
+.tmp/
+reports/latest/
+.cache/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

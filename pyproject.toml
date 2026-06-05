@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "funding-alert-monitor"
+version = "0.1.0"
+description = "Monitor startup funding alerts, verify article dates, enrich founders, and generate reports."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Funding Monitor contributors" }]
+dependencies = [
+  "beautifulsoup4>=4.12.0",
+  "feedparser>=6.0.0",
+  "python-dotenv>=1.0.0",
+  "requests>=2.32.0"
+]
+
+[project.optional-dependencies]
+apify = ["apify-client>=1.8.0"]
+dev = []
+
+[project.scripts]
+funding-monitor = "funding_monitor.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["funding_monitor*"]

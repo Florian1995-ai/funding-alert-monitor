@@ -1,0 +1,112 @@
+name: Recently Funded Startup Monitor
+
+on:
+  schedule:
+    - cron: '*/30 6-22 * * 1-5'
+    - cron: '0 */4 * * 0,6'
+  workflow_dispatch:
+    inputs:
+      days_back:
+        description: 'How many days back to scan'
+        required: false
+        default: '2'
+      use_tavily:
+        description: 'Use Tavily search in addition to RSS'
+        required: false
+        default: true
+        type: boolean
+      fetch_articles:
+        description: 'Fetch source pages to verify article dates'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install -r requirements.txt
+
+      - name: Restore funding cache
+        uses: actions/cache@v4
+        with:
+          path: .tmp
+          key: funding-monitor-${{ github.run_id }}
+          restore-keys: |
+            funding-monitor-
+
+      - name: Run monitor
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          TAVILY_API_KEY_2: ${{ secrets.TAVILY_API_KEY_2 }}
+          TAVILY_API_KEY_3: ${{ secrets.TAVILY_API_KEY_3 }}
+          TAVILY_API_KEY_4: ${{ secrets.TAVILY_API_KEY_4 }}
+          TAVILY_API_KEY_5: ${{ secrets.TAVILY_API_KEY_5 }}
+          TAVILY_API_KEY_6: ${{ secrets.TAVILY_API_KEY_6 }}
+          TAVILY_API_KEY_7: ${{ secrets.TAVILY_API_KEY_7 }}
+          TAVILY_API_KEY_8: ${{ secrets.TAVILY_API_KEY_8 }}
+          TAVILY_API_KEY_9: ${{ secrets.TAVILY_API_KEY_9 }}
+          TAVILY_API_KEY_10: ${{ secrets.TAVILY_API_KEY_10 }}
+          EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+          EXA_API_KEY_2: ${{ secrets.EXA_API_KEY_2 }}
+          EXA_API_KEY_3: ${{ secrets.EXA_API_KEY_3 }}
+          EXA_API_KEY_4: ${{ secrets.EXA_API_KEY_4 }}
+          EXA_API_KEY_5: ${{ secrets.EXA_API_KEY_5 }}
+          EXA_API_KEY_6: ${{ secrets.EXA_API_KEY_6 }}
+          EXA_API_KEY_7: ${{ secrets.EXA_API_KEY_7 }}
+          EXA_API_KEY_8: ${{ secrets.EXA_API_KEY_8 }}
+          EXA_API_KEY_9: ${{ secrets.EXA_API_KEY_9 }}
+          EXA_API_KEY_10: ${{ secrets.EXA_API_KEY_10 }}
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          APIFY_API_TOKEN_2: ${{ secrets.APIFY_API_TOKEN_2 }}
+          APIFY_API_TOKEN_3: ${{ secrets.APIFY_API_TOKEN_3 }}
+          APIFY_API_TOKEN_4: ${{ secrets.APIFY_API_TOKEN_4 }}
+          APIFY_API_TOKEN_5: ${{ secrets.APIFY_API_TOKEN_5 }}
+          APIFY_API_TOKEN_6: ${{ secrets.APIFY_API_TOKEN_6 }}
+          APIFY_API_TOKEN_7: ${{ secrets.APIFY_API_TOKEN_7 }}
+          APIFY_API_TOKEN_8: ${{ secrets.APIFY_API_TOKEN_8 }}
+          APIFY_API_TOKEN_9: ${{ secrets.APIFY_API_TOKEN_9 }}
+          APIFY_API_TOKEN_10: ${{ secrets.APIFY_API_TOKEN_10 }}
+        run: |
+          mkdir -p .tmp reports/latest
+          TAVILY_FLAG=""
+          if [ "${{ inputs.use_tavily }}" != "false" ]; then TAVILY_FLAG="--use-tavily"; fi
+          FETCH_FLAG=""
+          if [ "${{ inputs.fetch_articles }}" != "false" ]; then FETCH_FLAG="--fetch-articles"; fi
+          python -m funding_monitor.cli monitor --days-back "${{ inputs.days_back || '2' }}" --limit 50 $TAVILY_FLAG --output .tmp/funding-candidates.json
+          python -m funding_monitor.cli verify --input .tmp/funding-candidates.json --days-back "${{ inputs.days_back || '2' }}" $FETCH_FLAG --output .tmp/funding-verified.json
+          python -m funding_monitor.cli enrich --input .tmp/funding-verified.json --output .tmp/funding-enriched.json
+          python -m funding_monitor.cli report --input .tmp/funding-enriched.json --output-dir reports/latest --title "Recently Funded Startup Monitor"
+
+      - name: Upload monitor artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: funding-monitor-results
+          path: |
+            .tmp/funding-candidates.json
+            .tmp/funding-verified.json
+            .tmp/funding-enriched.json
+            reports/latest/
+
+      - name: Save funding cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .tmp
+          key: funding-monitor-${{ github.run_id }}
